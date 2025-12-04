@@ -8,20 +8,6 @@
 terraform {
   source = "../../../modules/principal-charm-cos"
 
-  # Deploy local charm via script (exits early if charm_source != "local")
-  before_hook "deploy_local_charm" {
-    commands = ["apply"]
-    execute  = [
-      "${get_repo_root()}/scripts/deploy-local-charm.sh",
-      local.charm_source,
-      local.model_name,
-      local.charm_path,
-      local.app_name,
-      local.units,
-      local.base
-    ]
-  }
-
   # Wait for subordinate to be active
   after_hook "wait_for_subordinate" {
     commands     = ["apply"]

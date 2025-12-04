@@ -4,7 +4,7 @@
 #
 # Supports two deployment paths:
 # 1. CharmHub: Native Terraform juju_application resource
-# 2. Local .charm: Juju CLI (via before_hook) + terraform import
+# 2. Local .charm: Juju CLI (via terraform_data provisioner) + terraform import
 
 locals {
   # Ensure exactly one deployment path is active
@@ -44,9 +44,24 @@ resource "juju_application" "principal" {
 
 
 # Charm Deployment (Local .charm Path)
-import {
-  to = juju_application.principal_imported[0]
-  id = "${juju_model.principal.uuid}:${var.app-name}"
+# Deploy via CLI and import into state using terraform_data provisioner
+resource "terraform_data" "local_charm_deploy_and_import" {
+  count = var.charm-source == "local" ? 1 : 0
+
+  # Deploy charm via Juju CLI after model is created
+  provisioner "local-exec" {
+    command     = "${path.root}/../../../scripts/deploy-local-charm.sh '${juju_model.principal.name}' '${var.charm-path}' '${var.app-name}' '${var.units}' '${var.base}'"
+    working_dir = path.root
+  }
+
+  # Import into Terraform state
+  provisioner "local-exec" {
+    command     = "${path.root}/../../../scripts/import-local-charm.sh '${juju_model.principal.name}' '${var.app-name}'"
+    working_dir = path.root
+  }
+
+  # Ensure model exists before deploying
+  depends_on = [juju_model.principal]
 }
 
 resource "juju_application" "principal_imported" {
@@ -64,6 +79,9 @@ resource "juju_application" "principal_imported" {
     # Prevent charm re-deployment while allowing config/resource updates
     ignore_changes = [charm]
   }
+
+  # Wait for deployment and import to complete
+  depends_on = [terraform_data.local_charm_deploy_and_import]
 }
 
 # Subordinate Charm Deployment (grafana-agent)
