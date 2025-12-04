@@ -21,8 +21,9 @@ Both components integrate with Canonical Observability Stack (COS) for monitorin
 ## Prerequisites
 
 - Existing Juju controller (bootstrapped)
-- Existing COS deployment with exposed offers
 - Existing Landscape Server (for cve-scanner)
+- Juju cloud that can deploy machines (LXD, MAAS, etc.) - could be the same as the one hosting [Landscape charm](https://github.com/canonical/landscape-charm)
+- Existing COS deployment with exposed offers
 
 ## Start
 
@@ -39,6 +40,7 @@ Copy and edit the environment configuration:
 
 ```bash
 cd environments/default
+cp environment-config.example.hcl environment-config.hcl
 vim environment-config.hcl
 ```
 

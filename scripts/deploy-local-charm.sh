@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
 # Deploy local .charm file using Juju CLI
 #
-# Usage: ./scripts/deploy_local_charm.sh <CHARM_SOURCE> <MODEL_NAME> <CHARM_FILE> <APP_NAME> [UNITS] [BASE]
+# Usage: deploy-local-charm.sh <MODEL_NAME> <CHARM_FILE> <APP_NAME> [UNITS] [BASE]
 
 set -euo pipefail
-
-CHARM_SOURCE="${1:-}"
-
-# Exit early if not local deployment (CharmHub path handles deployment via Terraform)
-if [[ "$CHARM_SOURCE" != "local" ]]; then
-  echo "[INFO] Skipping local charm deployment (charm-source=$CHARM_SOURCE)" >&2
-  exit 0
-fi
-
-# Remaining args are for local deployment
-shift
 
 MODEL_NAME="${1:-}"
 CHARM_FILE="${2:-}"
@@ -23,7 +12,7 @@ UNITS="${4:-1}"
 BASE="${5:-}"
 
 if [[ -z "$APP_NAME" ]]; then
-  echo "Usage: $0 <CHARM_SOURCE> <MODEL_NAME> <CHARM_FILE> <APP_NAME> [UNITS] [BASE]" >&2
+  echo "Usage: $0 <MODEL_NAME> <CHARM_FILE> <APP_NAME> [UNITS] [BASE]" >&2
   exit 1
 fi
 

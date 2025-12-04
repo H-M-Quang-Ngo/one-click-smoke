@@ -16,6 +16,7 @@ artifacts/
 # Environment variables and secrets
 *.env
 *.tfvars
+environment-config.hcl
 
 # OS files
 .DS_Store

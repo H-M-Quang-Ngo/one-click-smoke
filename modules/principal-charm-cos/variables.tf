@@ -3,6 +3,12 @@
 # This module supports deploying machine charms from CharmHub or local .charm files
 # with grafana-agent subordinate integration for COS integration.
 
+# Repository Root Path
+variable "repo-root" {
+  description = "Absolute path to repository root (for resolving script paths)"
+  type        = string
+}
+
 # Model Variables
 variable "model-name" {
   description = "Juju model name for deploying the principal charm"

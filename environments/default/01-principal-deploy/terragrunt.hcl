@@ -8,32 +8,16 @@
 terraform {
   source = "../../../modules/principal-charm-cos"
 
-  # Deploy local charm via script (exits early if charm_source != "local")
-  before_hook "deploy_local_charm" {
+  # Wait for principal to be deployed (active or blocked)
+  after_hook "wait_for_principal_deployed" {
     commands = ["apply"]
-    execute  = [
-      "${get_repo_root()}/scripts/deploy-local-charm.sh",
-      local.charm_source,
-      local.model_name,
-      local.charm_path,
-      local.app_name,
-      local.units,
-      local.base
-    ]
+    execute  = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.app_name, "status==\"active\" || status==\"blocked\""]
   }
 
   # Wait for subordinate to be active
   after_hook "wait_for_subordinate" {
-    commands     = ["apply"]
-    execute      = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.subordinate_name, "status==\"active\""]
-    run_on_error = true
-  }
-
-  # Wait for principal to be deployed (active or blocked)
-  after_hook "wait_for_principal_deployed" {
-    commands     = ["apply"]
-    execute      = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.app_name, "status==\"active\" || status==\"blocked\""]
-    run_on_error = true
+    commands = ["apply"]
+    execute  = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.subordinate_name, "status==\"active\""]
   }
 }
 
@@ -44,6 +28,9 @@ include "root" {
 locals {
   # Read from parent directory
   env_vars = read_terragrunt_config(find_in_parent_folders("environment-config.hcl"))
+
+  # Get absolute repository root path
+  repo_root_absolute = get_repo_root()
 
   # Extract common variables
   model_name   = local.env_vars.locals.model_name
@@ -73,6 +60,9 @@ locals {
 }
 
 inputs = {
+  # Repository root for script resolution (absolute path)
+  repo-root = local.repo_root_absolute
+
   # Model configuration
   model-name   = local.model_name
   cloud-name   = local.cloud_name

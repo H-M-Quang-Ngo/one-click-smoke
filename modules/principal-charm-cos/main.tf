@@ -4,7 +4,10 @@
 #
 # Supports two deployment paths:
 # 1. CharmHub: Native Terraform juju_application resource
-# 2. Local .charm: Juju CLI (via before_hook) + terraform import
+# 2. Local .charm: Juju CLI (via terraform_data provisioner)
+#
+# NOTE: Juju Terraform provider does NOT support local charms.
+# For local charms, we deploy via CLI and reference by name (not as a resource).
 
 locals {
   # Ensure exactly one deployment path is active
@@ -44,26 +47,18 @@ resource "juju_application" "principal" {
 
 
 # Charm Deployment (Local .charm Path)
-import {
-  to = juju_application.principal_imported[0]
-  id = "${juju_model.principal.uuid}:${var.app-name}"
-}
-
-resource "juju_application" "principal_imported" {
+# Deploy via CLI - provider cannot manage local charms, so we just deploy and reference by name
+resource "terraform_data" "local_charm_deploy_and_import" {
   count = var.charm-source == "local" ? 1 : 0
 
-  name       = var.app-name
-  model_uuid = juju_model.principal.uuid
-
-  # Minimal configuration - charm details managed by CLI deployment
-  charm {
-    name = var.charm-name
+  # Deploy charm via Juju CLI after model is created
+  provisioner "local-exec" {
+    command     = "${var.repo-root}/scripts/deploy-local-charm.sh '${juju_model.principal.name}' '${var.charm-path}' '${var.app-name}' '${var.units}' '${var.base}'"
+    working_dir = path.root
   }
 
-  lifecycle {
-    # Prevent charm re-deployment while allowing config/resource updates
-    ignore_changes = [charm]
-  }
+  # Ensure model exists before deploying
+  depends_on = [juju_model.principal]
 }
 
 # Subordinate Charm Deployment (grafana-agent)
@@ -82,7 +77,7 @@ resource "juju_application" "subordinate" {
   # Ensure principal app exists before deploying subordinate
   depends_on = [
     juju_application.principal,
-    juju_application.principal_imported
+    terraform_data.local_charm_deploy_and_import
   ]
 }
 
@@ -91,25 +86,22 @@ resource "juju_integration" "cos_agent" {
 
   model_uuid = juju_model.principal.uuid
 
-  # Provider: principal charm (provides cos_agent interface)
+  # Provider: principal charm (provides cos-agent relation)
   application {
-    name = try(
-      juju_application.principal[0].name,
-      juju_application.principal_imported[0].name
-    )
-    endpoint = "cos_agent"
+    name     = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
+    endpoint = "cos-agent"
   }
 
-  # Requirer: grafana-agent subordinate (requires cos_agent interface)
+  # Requirer: grafana-agent subordinate (requires cos-agent relation)
   application {
     name     = juju_application.subordinate[0].name
-    endpoint = "cos_agent"
+    endpoint = "cos-agent"
   }
 
   # Ensure both applications exist before creating relation
   depends_on = [
     juju_application.principal,
-    juju_application.principal_imported,
+    terraform_data.local_charm_deploy_and_import,
     juju_application.subordinate
   ]
 }

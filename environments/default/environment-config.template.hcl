@@ -75,13 +75,15 @@ locals {
 # Security Notes
 # ============================================================================
 
-# IMPORTANT: This file may contain sensitive information
-# - DO NOT commit actual API keys/secrets to version control
-# - Use Terraform sensitive variables for secrets
-# - Consider using external secret management (HashiCorp Vault, AWS Secrets Manager)
-# - Landscape API credentials should be injected at runtime
-
-# Recommended: Use environment variables or secret files
-# Example:
-#   export TF_VAR_landscape_api_key="actual-key"
-#   export TF_VAR_landscape_api_secret="actual-secret"
+# IMPORTANT: Configuration file pattern
+# - This is a TEMPLATE file (tracked in git) with placeholder values
+# - Copy to 'environment-config.hcl' (ignored by git) and fill in actual values
+# - DON'T commit actual secrets to version control
+#
+# Setup:
+#   cp environment-config.template.hcl environment-config.hcl
+#   # Edit environment-config.hcl with actual values
+#
+# Recommended: Use environment variables for secrets (overrides file values)
+#   export TF_VAR_landscape_api_key_value="actual-key"
+#   export TF_VAR_landscape_api_secret_value="actual-secret"

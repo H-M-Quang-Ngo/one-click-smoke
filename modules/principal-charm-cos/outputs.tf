@@ -18,24 +18,13 @@ output "model-id" {
 
 # Application Outputs
 output "app-name" {
-  value = try(
-    juju_application.principal[0].name,
-    try(
-      juju_application.principal_imported[0].name,
-      var.app-name
-    )
-  )
+  value       = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
   description = "Application name"
 }
 
 output "app-id" {
-  value = try(
-    juju_application.principal[0].id,
-    try(
-      juju_application.principal_imported[0].id,
-      null
-    )
-  )
+  # For local charms, construct ID from model UUID and app name
+  value       = var.charm-source == "charmhub" ? juju_application.principal[0].id : "${juju_model.principal.uuid}:${var.app-name}"
   description = "Application resource ID"
 }
 
@@ -53,13 +42,7 @@ output "charm-source" {
 output "app-endpoint-reference" {
   value = {
     model_uuid = juju_model.principal.uuid
-    app_name = try(
-      juju_application.principal[0].name,
-      try(
-        juju_application.principal_imported[0].name,
-        var.app-name
-      )
-    )
+    app_name   = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
   }
   description = "Reference for juju_integration resources (model_uuid + app_name)"
 }
