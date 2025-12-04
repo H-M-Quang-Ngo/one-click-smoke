@@ -1,0 +1,43 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terragrunt-cache/
+
+# Terraform lock files
+.terraform.lock.hcl
+
+# Local charm artifacts
+artifacts/
+*.charm
+*.snap
+
+# Environment variables and secrets
+*.env
+*.tfvars
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Temporary files
+tmp/
+temp/
