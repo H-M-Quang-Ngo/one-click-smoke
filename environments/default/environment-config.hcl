@@ -1,0 +1,87 @@
+# Terraform Variables - Default Environment
+#
+# This file contains all environment-specific variables
+#
+locals {
+  environment = "default"
+
+  # ============================================================================
+  # CVE-Scanner Configuration
+  # ============================================================================
+  model_name   = "cve-scanner-model"
+  cloud_name   = "localhost"
+  cloud_region = "localhost"
+
+  # cve-scanner charm deployment configuration
+  charm_source = "local"
+
+  # Local charm file path (only used if charm_source = "local")
+  charm_path = "/path/to/cve-scanner.charm"
+
+  # Local snap resource path for resource attachment
+  snap_resource_path = "/path/to/cve-scanner.snap"
+
+  # CharmHub configuration (only used if charm_source = "charmhub")
+  charm_name    = "cve-scanner"
+  charm_channel = "latest/stable"
+
+  # Application configuration
+  app_name = "cve-scanner"
+  units    = 1
+  base     = "ubuntu@24.04"
+
+  # Deployment constraints (optional)
+  constraints = "" # Example: "mem=4G cores=2"
+
+  # ============================================================================
+  # Stage 2: CVE-Scanner Landscape Configuration
+  # ============================================================================
+
+  # Landscape API endpoint (REQUIRED for CVE-Scanner functionality)
+  landscape_api_uri = "https://landscape.canonical.com/api/"
+
+  # Terraform-managed secrets for Landscape credentials (REQUIRED)
+  manage_secrets             = true
+  landscape_api_key_value    = "CHANGEME-API-KEY"
+  landscape_api_secret_value = "CHANGEME-API-SECRET"
+
+  # IMPORTANT: Use environment variables instead:
+  #   export TF_VAR_landscape_api_key_value="actual-key"
+  #   export TF_VAR_landscape_api_secret_value="actual-secret"
+
+  # CA certificate for self-signed Landscape servers (OPTIONAL)
+  # Provide path to CA cert file - content will be read and supplied to charm
+  landscape_ca_cert_file = "" # Example: "/path/to/ca-cert.pem"
+
+  # ============================================================================
+  # Subordinate Charm
+  # ============================================================================
+  deploy_subordinate        = true
+  subordinate_name          = "grafana-agent"
+  subordinate_charm_channel = "latest/stable"
+
+  # ============================================================================
+  # COS Cross-Model Relations
+  # ============================================================================
+  enable_cos_integration = true
+
+  # COS offer URLs (format: controller:owner/model.app:endpoint)
+  prometheus_offer_url = "cos-controller:admin/cos.prometheus-receive-remote-write"
+  loki_offer_url       = "cos-controller:admin/cos.loki-logging"
+  grafana_offer_url    = "cos-controller:admin/cos.grafana-dashboards"
+}
+
+# ============================================================================
+# Security Notes
+# ============================================================================
+
+# IMPORTANT: This file may contain sensitive information
+# - DO NOT commit actual API keys/secrets to version control
+# - Use Terraform sensitive variables for secrets
+# - Consider using external secret management (HashiCorp Vault, AWS Secrets Manager)
+# - Landscape API credentials should be injected at runtime
+
+# Recommended: Use environment variables or secret files
+# Example:
+#   export TF_VAR_landscape_api_key="actual-key"
+#   export TF_VAR_landscape_api_secret="actual-secret"
