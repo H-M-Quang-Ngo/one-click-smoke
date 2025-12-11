@@ -1,8 +1,7 @@
 # Stage 1 - CVE Scanner and Grafana-Agent Deployment
 #
 # - Deploy cve-scanner charm
-# - Deploy grafana-agent and relate to cve-scanner
-# - Relate grafana-agent to COS components
+# - If COS integration enabled: deploy grafana-agent and create COS relations
 #
 
 terraform {
@@ -14,10 +13,10 @@ terraform {
     execute  = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.app_name, "status==\"active\" || status==\"blocked\""]
   }
 
-  # Wait for subordinate to be active
-  after_hook "wait_for_subordinate" {
+  # Wait for grafana-agent to be active (only if COS integration enabled)
+  after_hook "wait_for_grafana_agent" {
     commands = ["apply"]
-    execute  = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.subordinate_name, "status==\"active\""]
+    execute  = local.enable_cos_integration ? ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, "grafana-agent", "status==\"active\""] : ["echo", "COS integration disabled, skipping grafana-agent wait"]
   }
 }
 
@@ -47,16 +46,12 @@ locals {
   base          = local.env_vars.locals.base
   constraints   = try(local.env_vars.locals.constraints, "")
 
-  # Subordinate configuration
-  deploy_subordinate         = try(local.env_vars.locals.deploy_subordinate, true)
-  subordinate_name           = local.env_vars.locals.subordinate_name
-  subordinate_charm_channel  = local.env_vars.locals.subordinate_charm_channel
-
   # COS cross-model integration
-  enable_cos_integration = try(local.env_vars.locals.enable_cos_integration, true)
-  prometheus_offer_url   = local.env_vars.locals.prometheus_offer_url
-  loki_offer_url         = local.env_vars.locals.loki_offer_url
-  grafana_offer_url      = local.env_vars.locals.grafana_offer_url
+  enable_cos_integration  = try(local.env_vars.locals.enable_cos_integration, true)
+  grafana_agent_channel   = try(local.env_vars.locals.grafana_agent_channel, "latest/stable")
+  prometheus_offer_url    = local.env_vars.locals.prometheus_offer_url
+  loki_offer_url          = local.env_vars.locals.loki_offer_url
+  grafana_offer_url       = local.env_vars.locals.grafana_offer_url
 }
 
 inputs = {
@@ -69,22 +64,18 @@ inputs = {
   cloud-region = local.cloud_region
 
   # Principal charm deployment
-  charm-source   = local.charm_source
-  charm-path     = local.charm_path   # Only used if charm-source = "local"
-  charm-name     = local.charm_name
-  charm-channel  = local.charm_channel
-  app-name       = local.app_name
-  units          = local.units
-  base           = local.base
-  constraints    = local.constraints
-
-  # Subordinate charm (grafana-agent)
-  deploy-subordinate        = local.deploy_subordinate
-  subordinate-name          = local.subordinate_name
-  subordinate-charm-channel = local.subordinate_charm_channel
+  charm-source  = local.charm_source
+  charm-path    = local.charm_path   # Only used if charm-source = "local"
+  charm-name    = local.charm_name
+  charm-channel = local.charm_channel
+  app-name      = local.app_name
+  units         = local.units
+  base          = local.base
+  constraints   = local.constraints
 
   # COS cross-model relations
   enable-cos-integration = local.enable_cos_integration
+  grafana-agent-channel  = local.grafana_agent_channel
   prometheus-offer-url   = local.prometheus_offer_url
   loki-offer-url         = local.loki_offer_url
   grafana-offer-url      = local.grafana_offer_url

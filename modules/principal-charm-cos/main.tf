@@ -61,28 +61,29 @@ resource "terraform_data" "local_charm_deploy_and_import" {
   depends_on = [juju_model.principal]
 }
 
-# Subordinate Charm Deployment (grafana-agent)
-resource "juju_application" "subordinate" {
-  count = var.deploy-subordinate ? 1 : 0
+# grafana-agent Deployment (only when COS integration is enabled)
+resource "juju_application" "grafana_agent" {
+  count = var.enable-cos-integration ? 1 : 0
 
-  name       = var.subordinate-name
+  name       = "grafana-agent"
   model_uuid = juju_model.principal.uuid
 
   charm {
-    name    = var.subordinate-name
-    channel = var.subordinate-charm-channel
+    name    = "grafana-agent"
+    channel = var.grafana-agent-channel
     base    = var.base
   }
 
-  # Ensure principal app exists before deploying subordinate
+  # Ensure principal app exists before deploying grafana-agent
   depends_on = [
     juju_application.principal,
     terraform_data.local_charm_deploy_and_import
   ]
 }
 
+# cos-agent relation: principal charm <-> grafana-agent
 resource "juju_integration" "cos_agent" {
-  count = var.deploy-subordinate ? 1 : 0
+  count = var.enable-cos-integration ? 1 : 0
 
   model_uuid = juju_model.principal.uuid
 
@@ -94,7 +95,7 @@ resource "juju_integration" "cos_agent" {
 
   # Requirer: grafana-agent subordinate (requires cos-agent relation)
   application {
-    name     = juju_application.subordinate[0].name
+    name     = "grafana-agent"
     endpoint = "cos-agent"
   }
 
@@ -102,59 +103,56 @@ resource "juju_integration" "cos_agent" {
   depends_on = [
     juju_application.principal,
     terraform_data.local_charm_deploy_and_import,
-    juju_application.subordinate
+    juju_application.grafana_agent
   ]
 }
 
-# COS Cross-Model Relations
+# ============================================================================
+# COS Cross-Model Relations (CLI-based for cross-controller CMR)
+# ============================================================================
+# NOTE: Juju Terraform provider only talks to one controller at a time.
+# However, COS could be hosted in a different controller than the deployed charm.
+# Therefore, for cross-controller CMR, a workaround is to use CLI:
+# `juju integrate -m <model> <app>:<endpoint> <offer-url>`
+
 ## CMR: grafana-agent -> Prometheus
-resource "juju_integration" "cos_prometheus" {
-  count      = var.enable-cos-integration && var.deploy-subordinate && var.prometheus-offer-url != "" ? 1 : 0
-  model_uuid = juju_model.principal.uuid
-  application {
-    name     = juju_application.subordinate[0].name
-    endpoint = "send-remote-write"
+resource "terraform_data" "cos_prometheus" {
+  count = var.enable-cos-integration && var.prometheus-offer-url != "" ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:send-remote-write' '${var.prometheus-offer-url}'"
   }
-  application {
-    offer_url = var.prometheus-offer-url
-  }
+
   depends_on = [
-    juju_application.subordinate,
+    juju_application.grafana_agent,
     juju_integration.cos_agent
   ]
 }
 
 ## CMR: grafana-agent -> Loki
-resource "juju_integration" "cos_loki" {
-  count      = var.enable-cos-integration && var.deploy-subordinate && var.loki-offer-url != "" ? 1 : 0
-  model_uuid = juju_model.principal.uuid
-  application {
-    name     = juju_application.subordinate[0].name
-    endpoint = "logging-consumer"
+resource "terraform_data" "cos_loki" {
+  count = var.enable-cos-integration && var.loki-offer-url != "" ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:logging-consumer' '${var.loki-offer-url}'"
   }
-  application {
-    offer_url = var.loki-offer-url
-  }
+
   depends_on = [
-    juju_application.subordinate,
+    juju_application.grafana_agent,
     juju_integration.cos_agent
   ]
 }
 
 ## CMR: grafana-agent -> Grafana
-resource "juju_integration" "cos_grafana" {
-  count      = var.enable-cos-integration && var.deploy-subordinate && var.grafana-offer-url != "" ? 1 : 0
-  model_uuid = juju_model.principal.uuid
-  application {
-    name     = juju_application.subordinate[0].name
-    endpoint = "grafana-dashboards-provider"
-  }
-  application {
-    offer_url = var.grafana-offer-url
+resource "terraform_data" "cos_grafana" {
+  count = var.enable-cos-integration && var.grafana-offer-url != "" ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:grafana-dashboards-provider' '${var.grafana-offer-url}'"
   }
 
   depends_on = [
-    juju_application.subordinate,
+    juju_application.grafana_agent,
     juju_integration.cos_agent
   ]
 }

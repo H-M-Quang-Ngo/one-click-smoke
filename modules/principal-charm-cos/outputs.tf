@@ -47,13 +47,10 @@ output "app-endpoint-reference" {
   description = "Reference for juju_integration resources (model_uuid + app_name)"
 }
 
-# Subordinate Charm Outputs
-output "subordinate-name" {
-  value = try(
-    juju_application.subordinate[0].name,
-    null
-  )
-  description = "Subordinate charm application name (null if not deployed)"
+# grafana-agent Outputs
+output "grafana-agent-deployed" {
+  value       = var.enable-cos-integration
+  description = "Whether grafana-agent was deployed for COS integration"
 }
 
 # Subordinate Charm Integration Outputs
@@ -74,60 +71,38 @@ output "cos-integration-status" {
 }
 
 # ============================================================================
-# COS Cross-Model Integration Outputs
+# COS Cross-Model Integration Outputs (CLI-based)
 # ============================================================================
+# NOTE: These integrations are created via CLI (`juju integrate`) for cross-controller support.
+# The terraform_data resources don't have Juju integration IDs - status is based on resource existence.
 
 output "cos-cross-model-enabled" {
   value       = var.enable-cos-integration
   description = "Whether COS cross-model integration is enabled"
 }
 
-output "cos-prometheus-integration-id" {
-  value = try(
-    juju_integration.cos_prometheus[0].id,
-    null
-  )
-  description = "Prometheus cross-model relation resource ID (null if not deployed)"
-}
-
 output "cos-prometheus-integration-status" {
   value = try(
-    juju_integration.cos_prometheus[0].id != null ? "active" : "not-deployed",
+    terraform_data.cos_prometheus[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
   )
-  description = "Prometheus cross-model relation status"
-}
-
-output "cos-loki-integration-id" {
-  value = try(
-    juju_integration.cos_loki[0].id,
-    null
-  )
-  description = "Loki cross-model relation resource ID (null if not deployed)"
+  description = "Prometheus cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
 output "cos-loki-integration-status" {
   value = try(
-    juju_integration.cos_loki[0].id != null ? "active" : "not-deployed",
+    terraform_data.cos_loki[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
   )
-  description = "Loki cross-model relation status"
-}
-
-output "cos-grafana-integration-id" {
-  value = try(
-    juju_integration.cos_grafana[0].id,
-    null
-  )
-  description = "Grafana cross-model relation resource ID (null if not deployed)"
+  description = "Loki cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
 output "cos-grafana-integration-status" {
   value = try(
-    juju_integration.cos_grafana[0].id != null ? "active" : "not-deployed",
+    terraform_data.cos_grafana[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
   )
-  description = "Grafana cross-model relation status"
+  description = "Grafana cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
 output "cos-offer-urls" {

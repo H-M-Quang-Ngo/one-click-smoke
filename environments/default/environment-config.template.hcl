@@ -54,16 +54,11 @@ locals {
   landscape_ca_cert_file = "" # Example: "/path/to/ca-cert.pem"
 
   # ============================================================================
-  # Subordinate Charm
+  # COS Integration
   # ============================================================================
-  deploy_subordinate        = true
-  subordinate_name          = "grafana-agent"
-  subordinate_charm_channel = "latest/stable"
-
-  # ============================================================================
-  # COS Cross-Model Relations
-  # ============================================================================
+  # When enabled: deploys grafana-agent and creates cross-model relations to COS
   enable_cos_integration = true
+  grafana_agent_channel  = "latest/stable"
 
   # COS offer URLs (format: controller:owner/model.app:endpoint)
   prometheus_offer_url = "cos-controller:admin/cos.prometheus-receive-remote-write"

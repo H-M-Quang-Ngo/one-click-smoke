@@ -11,7 +11,7 @@ set -euo pipefail
 MODEL="${1:-}"
 APPLICATION="${2:-}"
 STATUS_QUERY="${3:-status==\"active\" || status==\"idle\"}"
-TIMEOUT="${4:-20m0s}"
+TIMEOUT="${4:-10m0s}"
 
 if [[ -z "$APPLICATION" ]]; then
   echo "Wait for a Juju application to reach specified status." >&2
@@ -22,7 +22,7 @@ if [[ -z "$APPLICATION" ]]; then
   echo "  MODEL        - Juju model name" >&2
   echo "  APPLICATION  - Application name" >&2
   echo "  STATUS_QUERY - JQ query for status (default: 'status==\"active\" || status==\"idle\"')" >&2
-  echo "  TIMEOUT      - Maximum wait time (default: 20m0s)" >&2
+  echo "  TIMEOUT      - Maximum wait time (default: 10m0s)" >&2
   echo "" >&2
   echo "Examples:" >&2
   echo "  $0 my-model grafana-agent 'status==\"active\"'" >&2

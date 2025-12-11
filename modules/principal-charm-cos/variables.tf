@@ -98,35 +98,18 @@ variable "constraints" {
   default     = null
 }
 
-# Subordinate Charm (grafana-agent) Variables
-variable "deploy-subordinate" {
-  description = "Deploy grafana-agent subordinate charm for COS observability integration"
+# COS Integration Variables
+# grafana-agent is only deployed when COS integration is enabled.
+variable "enable-cos-integration" {
+  description = "Enable COS integration: deploys grafana-agent and creates cross-model relations to COS"
   type        = bool
   default     = true
 }
 
-variable "subordinate-name" {
-  description = "Application name for subordinate charm (usually grafana-agent)"
-  type        = string
-  default     = "grafana-agent"
-
-  validation {
-    condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", var.subordinate-name))
-    error_message = "Subordinate name must contain only lowercase letters, numbers, and hyphens"
-  }
-}
-
-variable "subordinate-charm-channel" {
-  description = "CharmHub channel for subordinate charm (e.g., latest/stable, latest/edge)"
+variable "grafana-agent-channel" {
+  description = "CharmHub channel for grafana-agent (e.g., latest/stable, latest/edge)"
   type        = string
   default     = "latest/stable"
-}
-
-# COS Cross-Model Integration Variables
-variable "enable-cos-integration" {
-  description = "Enable cross-model relations to external COS stack (Prometheus, Grafana, Loki)"
-  type        = bool
-  default     = true
 }
 
 variable "prometheus-offer-url" {
