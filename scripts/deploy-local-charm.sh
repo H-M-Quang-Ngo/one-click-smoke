@@ -32,7 +32,7 @@ DEPLOY_CMD="juju deploy --model=$MODEL_NAME $CHARM_FILE $APP_NAME"
 eval "$DEPLOY_CMD"
 
 # Get model UUID for terraform import
-MODEL_UUID=$(juju models --format=json | jq -r ".models[] | select(.name==\"$MODEL_NAME\") | .uuid")
+MODEL_UUID=$(juju show-model "$MODEL_NAME" --format=json | jq -r ".[\"$MODEL_NAME\"] | .\"model-uuid\"")
 
 # Output terraform import ID (model_uuid:app_name)
 echo "${MODEL_UUID}:${APP_NAME}"

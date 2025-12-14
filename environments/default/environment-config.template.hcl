@@ -64,6 +64,29 @@ locals {
   prometheus_offer_url = "cos-controller:admin/cos.prometheus-receive-remote-write"
   loki_offer_url       = "cos-controller:admin/cos.loki-logging"
   grafana_offer_url    = "cos-controller:admin/cos.grafana-dashboards"
+
+  # ============================================================================
+  # COS Configuration K8s Charm (Alert Rule Forwarding)
+  # ============================================================================
+  # Independent component that deploys to COS model
+  # Pulls alert rules from Git repository and forwards to Prometheus/Loki
+
+  # COS model location (format: controller:owner/model)
+  cos_model = "cos-controller:admin/cos"
+
+  # Git repository configuration
+  cos_config_git_repo                    = "https://github.com/canonical/smoke-alerts"
+  cos_config_git_branch                  = "main"
+  cos_config_prometheus_alert_rules_path = "rules/prod/prometheus/"
+  cos_config_loki_alert_rules_path       = "rules/prod/loki/"
+
+  # Application settings
+  cos_config_app_name      = "cos-config"
+  cos_config_charm_channel = "1/stable"
+
+  # Integration toggles
+  cos_config_integrate_prometheus = true
+  cos_config_integrate_loki       = true
 }
 
 # ============================================================================
