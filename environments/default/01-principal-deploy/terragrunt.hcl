@@ -7,6 +7,12 @@
 terraform {
   source = "../../../modules/principal-charm-cos"
 
+  # Switch to provided controller before Terraform operations
+  before_hook "switch_to_controller" {
+    commands = ["apply", "destroy"]
+    execute  = ["juju", "switch", local.controller_name]
+  }
+
   # Wait for principal to be deployed (active or blocked)
   after_hook "wait_for_principal_deployed" {
     commands = ["apply"]
@@ -32,6 +38,7 @@ locals {
   repo_root_absolute = get_repo_root()
 
   # Extract common variables
+  controller_name = local.env_vars.locals.controller_name
   model_name   = local.env_vars.locals.model_name
   cloud_name   = local.env_vars.locals.cloud_name
   cloud_region = local.env_vars.locals.cloud_region

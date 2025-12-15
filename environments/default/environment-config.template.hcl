@@ -8,9 +8,10 @@ locals {
   # ============================================================================
   # CVE-Scanner Configuration
   # ============================================================================
-  model_name   = "cve-scanner-model"
-  cloud_name   = "localhost"
-  cloud_region = "localhost"
+  controller_name = "my-controller"
+  model_name      = "cve-scanner-model"
+  cloud_name      = "localhost"
+  cloud_region    = "localhost"
 
   # cve-scanner charm deployment configuration
   charm_source = "local"
