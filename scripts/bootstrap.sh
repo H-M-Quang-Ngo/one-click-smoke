@@ -40,19 +40,9 @@ install_dependencies() {
         curl \
         wget \
         unzip \
-        jq \
-        python3 \
-        python3-pip \
-        python3-venv \
-        git
+        jq
 
-    if ! command -v yq &> /dev/null; then
-        log_info "Installing yq..."
-        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-        sudo chmod +x /usr/local/bin/yq
-    else
-        log_info "yq already installed"
-    fi
+    log_info "System dependencies installed"
 }
 
 install_terraform() {
@@ -61,14 +51,17 @@ install_terraform() {
     if command -v terraform &> /dev/null; then
         INSTALLED_VERSION=$(terraform version -json | jq -r '.terraform_version')
         if [[ "$INSTALLED_VERSION" == "$TERRAFORM_VERSION" ]]; then
-            log_info "Terraform $TERRAFORM_VERSION already installed"
-            return 0
+            log_info "Terraform $TERRAFORM_VERSION (exact match)"
         else
-            log_warn "Terraform version mismatch. Installed: $INSTALLED_VERSION, Required: $TERRAFORM_VERSION"
-            log_info "Installing pinned version $TERRAFORM_VERSION ..."
+            log_warn "Terraform version mismatch:"
+            log_warn "  Current installed: $INSTALLED_VERSION"
+            log_warn "  This project is tested with: $TERRAFORM_VERSION"
+            log_warn "  Things might not behave as expected with different versions"
         fi
+        return 0
     fi
 
+    # Install if not found
     log_info "Installing Terraform ${TERRAFORM_VERSION}..."
 
     cd /tmp
@@ -87,14 +80,17 @@ install_terragrunt() {
     if command -v terragrunt &> /dev/null; then
         INSTALLED_VERSION=$(terragrunt --version | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
         if [[ "$INSTALLED_VERSION" == "$TERRAGRUNT_VERSION" ]]; then
-            log_info "Terragrunt $TERRAGRUNT_VERSION already installed"
-            return 0
+            log_info "Terragrunt $TERRAGRUNT_VERSION (exact match)"
         else
-            log_warn "Terragrunt version mismatch. Installed: $INSTALLED_VERSION, Required: $TERRAGRUNT_VERSION"
-            log_info "Installing correct version..."
+            log_warn "Terragrunt version mismatch:"
+            log_warn "  Current installed: $INSTALLED_VERSION"
+            log_warn "  This project is tested with: $TERRAGRUNT_VERSION"
+            log_warn "  Things might not behave as expected with different versions"
         fi
+        return 0
     fi
 
+    # Install if not found
     log_info "Installing Terragrunt ${TERRAGRUNT_VERSION}..."
 
     cd /tmp
@@ -129,10 +125,10 @@ verify_installation() {
     if command -v terraform &> /dev/null; then
         INSTALLED_VERSION=$(terraform version -json | jq -r '.terraform_version')
         if [[ "$INSTALLED_VERSION" == "$TERRAFORM_VERSION" ]]; then
-            log_info "Terraform ${TERRAFORM_VERSION}"
+            log_info "Terraform ${TERRAFORM_VERSION} (exact match)"
         else
-            log_error "Terraform version mismatch: $INSTALLED_VERSION (expected: $TERRAFORM_VERSION)"
-            all_ok=false
+            log_info "Terraform ${INSTALLED_VERSION}"
+            log_warn "  This project is tested with: $TERRAFORM_VERSION"
         fi
     else
         log_error "Terraform not found"
@@ -143,10 +139,10 @@ verify_installation() {
     if command -v terragrunt &> /dev/null; then
         INSTALLED_VERSION=$(terragrunt --version | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
         if [[ "$INSTALLED_VERSION" == "$TERRAGRUNT_VERSION" ]]; then
-            log_info "Terragrunt ${TERRAGRUNT_VERSION}"
+            log_info "Terragrunt ${TERRAGRUNT_VERSION} (exact match)"
         else
-            log_error "Terragrunt version mismatch: $INSTALLED_VERSION (expected: $TERRAGRUNT_VERSION)"
-            all_ok=false
+            log_info "Terragrunt ${INSTALLED_VERSION}"
+            log_warn "  This project is tested with: $TERRAGRUNT_VERSION"
         fi
     else
         log_error "Terragrunt not found"
@@ -161,15 +157,13 @@ verify_installation() {
         all_ok=false
     fi
 
-    # Check dependencies
-    for cmd in jq yq python3; do
-        if command -v $cmd &> /dev/null; then
-            log_info " $cmd"
-        else
-            log_error " $cmd not found"
-            all_ok=false
-        fi
-    done
+    # Check jq
+    if command -v jq &> /dev/null; then
+        log_info " jq"
+    else
+        log_error " jq not found"
+        all_ok=false
+    fi
 
     if [[ "$all_ok" == "true" ]]; then
         log_info "All tools installed successfully!"

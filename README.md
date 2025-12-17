@@ -6,16 +6,16 @@ Automated deployment tool for Smoke Detector using Terragrunt + Terraform + Bash
 
 This project provides Infrastructure as Code (IaC) for deploying and managing Smoke Detector components:
 
-- **cve-scanner** - Machine charm for CVE scanning packages in nodes managed by a Landscape Server
-- **cos-configuration-k8s** - K8s charm for COS alert rule forwarding
+- **[cve-scanner](https://github.com/canonical/cve-scanner-operator)** - Juju machine charm for CVE scanning packages in nodes managed by a Landscape Server
+- **[cos-configuration-k8s](https://github.com/canonical/cos-configuration-k8s-operator)** - Juju K8s charm for COS alert rule forwarding, where the rules are synced from [Smoke-Alerts](https://github.com/canonical/smoke-alerts) repository
 
-Both components integrate with Canonical Observability Stack (COS) for monitoring and alerting.
+Both components integrate with [COS Lite](https://documentation.ubuntu.com/observability/latest/) for monitoring and alerting.
 
 ## Architecture
 
 - **Terragrunt** - Multi-environment orchestration and DRY configuration
 - **Terraform** - Declarative infrastructure provisioning via Juju provider
-- **Bash Hooks** - Support Terragrunt for local `.charm` file deployment and other custom hooks
+- **Bash Scripts** - Support Terragrunt for deployment and running custom hooks
 - **Juju** - Application modeling and lifecycle management
 
 ## Prerequisites
@@ -23,20 +23,29 @@ Both components integrate with Canonical Observability Stack (COS) for monitorin
 - Existing Juju controller (bootstrapped)
 - Existing Landscape Server (for cve-scanner)
 - Juju cloud that can deploy machines (LXD, MAAS, etc.) - recommended to be the one hosting [Landscape charm](https://github.com/canonical/landscape-charm)
-- Existing COS deployment with exposed offers
+- Existing COS Lite deployment with exposed offers
 
 ## What will be Deployed?
 - **cve-scanner**:
   - A new Juju model will be created with `cve-scanner` principal machine charm deployed
-  - `grafana-agent` installed, connected to `cve-scanner` and integrated with existing COS via provided offers
+  - `grafana-agent` installed, connected to `cve-scanner` and integrated with existing COS Lite via provided offered URLs
   - `cve-scanner` configured with provided Landscape credentials for retrieving package data from managed nodes
 
+  Example output:
+    ![alt text](./images/image-2.png)
+  _`cve-scanner` deployed into a new Juju model `cve-1-click` managed by existing Juju controller `lsc-controlller`, integrated with existing COS Lite via `grafana-agent`._
+
 - **cos-configuration-k8s**:
-  - `cos-configuration-k8s` charm deployed into the existing Juju model that hosting COS
+  - `cos-configuration-k8s` charm deployed into the existing Juju model that hosting COS Lite
   - Configured to sync alert rules from [Smoke-Alerts](https://github.com/canonical/smoke-alerts) repository
   - Integrate with Prometheus and Loki for alert rule forwarding
 
+  Example output:
+    ![alt text](./images/image-1.png)
+  _`cos-configuration-k8s` deployed as `cos-config` into existing Juju model `cos-model` hosting COS Lite, syncing alert rules from Smoke-Alerts repository._
+
 ## Start
+Clone and navigate to the project directory.
 
 ### 1. Bootstrap Environment
 
@@ -53,7 +62,7 @@ In the environment directory, copy and edit the environment configuration:
 
 ```bash
 cd ./environments/default
-cp environment-config.example.hcl environment-config.hcl
+cp environment-config.template.hcl environment-config.hcl
 vim environment-config.hcl
 ```
 
@@ -140,7 +149,7 @@ one-click-smoke/
 - **Terraform**: v1.14.0
 - **Terragrunt**: v0.93.10
 - **Juju Provider**: v1.0.0 (Terraform provider for Juju)
-- **Dependencies**: jq, yq, python3
+- **Dependencies**: jq
 
 ## Notes on Components
 `cve-scanner` and `cos-configuration-k8s` are **INDEPENDENT**:

@@ -213,13 +213,13 @@ deploy_cve_scanner() {
     log_step "Deploying CVE Scanner component..."
     log_info "CVE-Scanner Stage 1: Charm deployment (cve-scanner + grafana-agent + COS integration)"
 
-    if ! terragrunt --working-dir "$ENV_DIR/01-principal-deploy" "$ACTION" $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/01-principal-deploy" "$ACTION" $AUTO_APPROVE; then
         log_error "CVE-Scanner Stage 1 failed: Charm deployment"
         return 1
     fi
 
     log_info "CVE-Scanner Stage 2: CVE Scanner configuration (Landscape integration, snap resource)"
-    if ! terragrunt --working-dir "$ENV_DIR/02-cve-scanner-specific" "$ACTION" $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/02-cve-scanner-specific" "$ACTION" $AUTO_APPROVE; then
         log_error "Stage 2 failed: CVE Scanner configuration"
         return 1
     fi
@@ -232,13 +232,13 @@ destroy_cve_scanner() {
     log_step "Destroying CVE Scanner component..."
     log_info "CVE-Scanner Stage 2: Removing CVE Scanner configuration"
 
-    if ! terragrunt --working-dir "$ENV_DIR/02-cve-scanner-specific" destroy $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/02-cve-scanner-specific" destroy $AUTO_APPROVE; then
         log_error "CVE-Scanner Stage 2 failed: CVE Scanner configuration destroy"
         return 1
     fi
 
     log_info "CVE-Scanner Stage 1: Removing principal charm (cve-scanner + grafana-agent)"
-    if ! terragrunt --working-dir "$ENV_DIR/01-principal-deploy" destroy $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/01-principal-deploy" destroy $AUTO_APPROVE; then
         log_error "CVE-Scanner Stage 1 failed: Principal deployment destroy"
         return 1
     fi
@@ -251,7 +251,7 @@ deploy_cos_config() {
     log_step "Deploying COS Configuration component..."
     log_info "COS Configuration Stage 3: COS configuration charm deployment and integration"
 
-    if ! terragrunt --working-dir "$ENV_DIR/03-cos-configuration-deploy" "$ACTION" $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/03-cos-configuration-deploy" "$ACTION" $AUTO_APPROVE; then
         log_error "COS Configuration Stage 3 failed: COS Configuration deployment"
         return 1
     fi
@@ -264,7 +264,7 @@ destroy_cos_config() {
     log_step "Destroying COS Configuration component"
     log_info "Stage 3: Removing COS configuration charm"
 
-    if ! terragrunt --working-dir "$ENV_DIR/03-cos-configuration-deploy" destroy $AUTO_APPROVE; then
+    if ! terragrunt --non-interactive --working-dir "$ENV_DIR/03-cos-configuration-deploy" destroy $AUTO_APPROVE; then
         log_error "Stage 3 failed: COS Configuration destroy"
         return 1
     fi
