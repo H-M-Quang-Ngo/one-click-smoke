@@ -10,7 +10,7 @@ terraform {
 
   # Switch to COS controller before Terraform operations
   before_hook "switch_to_cos_controller" {
-    commands = ["apply", "destroy"]
+    commands = ["apply", "destroy", "plan"]
     execute  = ["juju", "switch", local.cos_model]
   }
 
@@ -46,19 +46,19 @@ locals {
 
 inputs = {
   # COS model configuration
-  cos-model = local.cos_model
+  cos_model = local.cos_model
 
   # Git repository configuration
-  git-repo                    = local.git_repo
-  git-branch                  = local.git_branch
-  prometheus-alert-rules-path = local.prometheus_alert_rules_path
-  loki-alert-rules-path       = local.loki_alert_rules_path
+  git_repo = local.git_repo
+  git_branch = local.git_branch
+  prometheus_alert_rules_path = local.prometheus_alert_rules_path
+  loki_alert_rules_path = local.loki_alert_rules_path
 
   # Application settings
-  app-name      = local.app_name
-  charm-channel = local.charm_channel
+  app_name = local.app_name
+  charm_channel = local.charm_channel
 
   # Integration toggles
-  integrate-prometheus = local.integrate_prometheus
-  integrate-loki       = local.integrate_loki
+  integrate_prometheus = local.integrate_prometheus
+  integrate_loki = local.integrate_loki
 }

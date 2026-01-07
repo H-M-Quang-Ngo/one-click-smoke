@@ -7,7 +7,7 @@ Automated deployment tool for Smoke Detector using Terragrunt + Terraform + Bash
 This project provides Infrastructure as Code (IaC) for deploying and managing Smoke Detector components:
 
 - **[cve-scanner](https://github.com/canonical/cve-scanner-operator)** - Juju machine charm for CVE scanning packages in nodes managed by a Landscape Server
-- **[cos-configuration-k8s](https://github.com/canonical/cos-configuration-k8s-operator)** - Juju K8s charm for COS alert rule forwarding, where the rules are synced from [Smoke-Alerts](https://github.com/canonical/smoke-alerts) repository
+- **[cos-configuration-k8s](https://github.com/canonical/cos-configuration-k8s-operator)** - Juju K8s charm for forwarding alert rules to COS Lite, where the rules are synced from [Smoke-Alerts](https://github.com/canonical/smoke-alerts) repository
 
 Both components integrate with [COS Lite](https://documentation.ubuntu.com/observability/latest/) for monitoring and alerting.
 
@@ -20,10 +20,10 @@ Both components integrate with [COS Lite](https://documentation.ubuntu.com/obser
 
 ## Prerequisites
 
-- Existing Juju controller (bootstrapped)
-- Existing Landscape Server (for cve-scanner)
-- Juju cloud that can deploy machines (LXD, MAAS, etc.) - recommended to be the one hosting [Landscape charm](https://github.com/canonical/landscape-charm)
-- Existing COS Lite deployment with exposed offers
+- Existing Juju controllers that Juju client can connect to
+- Existing Landscape Server (for `cve-scanner`)
+- Juju cloud that can deploy machines (LXD, MAAS, etc.) - recommended to be the one hosting [Landscape charm](https://github.com/canonical/landscape-charm) - `cve-scanner` will be deployed into a new Juju model managed by this controller
+- Existing COS Lite deployment with exposed offers - `cos-configuration-k8s` will be deployed into the same Juju model hosting COS Lite
 
 ## What will be Deployed?
 - **cve-scanner**:
@@ -40,9 +40,42 @@ Both components integrate with [COS Lite](https://documentation.ubuntu.com/obser
   - Configured to sync alert rules from [Smoke-Alerts](https://github.com/canonical/smoke-alerts) repository
   - Integrate with Prometheus and Loki for alert rule forwarding
 
+  > **Important Note:** The alert rules might not work out-of-the-box and require extra configuration from the targets' side (OpenStack, K8s, etc.) for proper alerting. Please refer to Smoke Alerts repository and its [setup guides](https://github.com/canonical/smoke-alerts/tree/main/docs/setup_guides).
+
   Example output:
     ![alt text](./images/image-1.png)
   _`cos-configuration-k8s` deployed as `cos-config` into existing Juju model `cos-model` hosting COS Lite, syncing alert rules from Smoke-Alerts repository._
+
+## Directory Structure
+
+```
+one-click-smoke/
+├── modules/              # Reusable Terraform modules (see modules/README.md for standalone usage)
+│   ├── cve-scanner/                        # CVE Scanner wrapper (principal + config)
+│   ├── cos-configuration-k8s/              # COS configuration charm
+│   ├── principal-charm-cos/                # Machine charm + grafana-agent + COS integration
+│   └── cve-scanner-config/                 # CVE Scanner configuration
+├── environments/         # Environment-specific setup
+│   └── default/
+│       ├── environment-config.hcl          # Environment configurations (not committed, taken from template)
+│       ├── environment-config.template.hcl # Template for environment configuration
+│       ├── 01-principal-deploy/            # Deploy machine charm and connect to COS (via grafana-agent)
+│       │   └── terragrunt.hcl
+│       └── 02-cve-scanner-specific/        # Configure CVE Scanner charm
+│       │   └── terragrunt.hcl
+│       └── 03-cos-configuration-deploy/    # Deploy COS configuration charm and connect to COS
+│           └── terragrunt.hcl
+├── scripts/              # Helper scripts
+│   ├── bootstrap.sh                        # Tool check/installation
+│   ├── download-artifacts.sh               # Download charm/snap from GitHub
+│   ├── deploy-local-charm.sh               # Local charm deployment
+│   ├── wait-for-application.sh             # Wait for Juju app ready
+│   └── cleanup.sh                          # Cleanup script
+├── artifacts/            # Local artifact files (optional, not committed)
+├── one-click-deploy      # One-click deployment script
+├── smoke-root.hcl        # Root Terragrunt configuration
+└── README.md             # This file
+```
 
 ## Start
 Clone and navigate to the project directory.
@@ -55,7 +88,25 @@ Check/install required tools (Terraform, Terragrunt, Juju CLI):
 ./scripts/bootstrap.sh
 ```
 
-### 2. Configure Environment
+### 2. Download Artifacts
+Currently CVE-Scanner charm and snap are not published to Charmhub/Snap Store. Use local artifacts by downloading latest CVE Scanner charm and snap from GitHub releases:
+
+```bash
+./scripts/download-artifacts.sh
+```
+
+Artifacts will be saved to `./artifacts/` directory by default, or a custom directory can be passed as an argument to the script.
+
+### 3. Deployment Options
+After setting up the environment and downloading artifacts, choose a deployment method:
+1. **Terragrunt Orchestration** (can handle multi-stage deployments in one command)
+2. **Standalone Terraform** (see [modules/README.md](modules/README.md))
+
+Section 4 below describes the Terragrunt deployment approach.
+
+### 4. Deployment Steps with Terragrunt
+
+#### 4.1 Configure Environment
 Each environment is located in `./environments/<env-name>/`. Use the provided template to create your own environment configuration. In this example, we use `default` environment.
 
 In the environment directory, copy and edit the environment configuration:
@@ -63,14 +114,12 @@ In the environment directory, copy and edit the environment configuration:
 ```bash
 cd ./environments/default
 cp environment-config.template.hcl environment-config.hcl
-vim environment-config.hcl
+vim environment-config.hcl # Provide variables as needed per instructions in the file
 ```
-
-### 3. Deploy Components
 
 **IMPORTANT:** Terraform Juju provider does not support controller switching and only allows one controller at a time, but `cve-scanner` and `cos-configuration-k8s` are independent components that can be deployed into different controllers and in any order. Therefore, commands like `terragrunt apply --all` for a one-click deployment from the environment root **cannot** be run to avoid controller race conditions. Instead, we have two options as below. Other operations can be done normally with Terraform/Terragrunt commands in each component directory.
 
-#### 3.1. Manual Deployment:
+#### 4.1. Manual Deployment:
 
 From the environment directory (for example, `./environments/default/`), either or both the `cve-scanner` and `cos-configuration-k8s` can be deployed with the following commands:
 
@@ -89,7 +138,7 @@ terragrunt --working-dir 02-cve-scanner-specific apply --auto-approve
 terragrunt --working-dir 03-cos-configuration-deploy apply --auto-approve
 ```
 
-#### 3.2. One-Click Deployment Script:
+#### 4.2. One-Click Deployment Script (Recommended):
 Alternatively, use the provided [one-click deploy script](one-click-deploy) at the project root as a wrapper to deploy either or both components in one command:
 
 ```bash
@@ -115,57 +164,16 @@ See script help for all options:
 ./one-click-deploy --help
 ```
 
-## Directory Structure
-
-```
-one-click-smoke/
-├── modules/              # Reusable Terraform modules
-│   ├── principal-charm-cos/                # Machine charm + grafana-agent + COS integration
-│   ├── cve-scanner/                        # Setup for CVE Scanner charm (required configs, resources)
-│   └── cos-configuration-k8s/              # COS configuration charm
-├── environments/         # Environment-specific setup
-│   └── default/
-│       ├── environment-config.hcl          # Environment configurations (not committed, taken from template)
-│       ├── environment-config.template.hcl     # Template for environment configuration
-│       ├── 01-principal-deploy/            # Deploy machine charm and connect to COS (via grafana-agent)
-│       │   └── terragrunt.hcl
-│       └── 02-cve-scanner-specific/        # Configure CVE Scanner charm
-│       │   └── terragrunt.hcl
-│       └── 03-cos-configuration-deploy/    # Deploy COS configuration charm and connect to COS
-│           └── terragrunt.hcl
-├── scripts/              # Helper scripts
-│   ├── bootstrap.sh                  # Tool check/installation
-│   ├── deploy-local-charm.sh         # Local charm deployment
-│   ├── wait-for-application.sh       # Wait for Juju app ready
-│   └── cleanup.sh                    # Cleanup script
-├── artifacts/            # Local artifact files (optional, not committed)
-├── one-click-deploy      # One-click deployment script
-├── smoke-root.hcl        # Root Terragrunt configuration
-└── README.md             # This file
-```
-
 ## Tools
 
 - **Terraform**: v1.14.0
 - **Terragrunt**: v0.93.10
 - **Juju Provider**: v1.0.0 (Terraform provider for Juju)
-- **Dependencies**: jq
 
 ## Notes on Components
 `cve-scanner` and `cos-configuration-k8s` are **INDEPENDENT**:
 - They do NOT depend on each other
 - No cross-dependencies in deployment order
-
-## Local Charm Deployment
-
-Currently CVE-Scanner charm and snap are not published to Charmhub/Snap Store. The charm should be deployed from local `.charm` file with the cve-scanner `.snap` attached as resource.
-Deploying local `.charm` files:
-1. Place `.charm` file in `artifacts/` directory
-2. Place `.snap` file in `artifacts/` directory
-3. Set `charm_source: file` in `environment-config.hcl`
-4. Set `charm_path: ./artifacts/<charm-name>.charm`
-5. Set `snap_path: ./artifacts/<snap-name>.snap`
-
 
 ## References
 - [Juju Documentation](https://juju.is/docs)

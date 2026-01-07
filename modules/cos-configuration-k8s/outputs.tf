@@ -1,7 +1,7 @@
 # COS Configuration K8s Module Outputs
 
 # Application Information
-output "app-name" {
+output "app_name" {
   description = "Name of the deployed cos-configuration-k8s application"
   value       = juju_application.cos_config.name
 }
@@ -24,31 +24,31 @@ output "model-uuid" {
 # Git Configuration
 output "git-repo" {
   description = "Git repository URL for alert rules"
-  value       = var.git-repo
+  value       = var.git_repo
 }
 
 output "git-branch" {
   description = "Git branch being used"
-  value       = var.git-branch
+  value       = var.git_branch
 }
 
 # Integration Status
 output "prometheus-integration-status" {
   description = "Prometheus integration status"
-  value       = var.integrate-prometheus ? (length(juju_integration.prometheus) > 0 ? "active" : "pending") : "disabled"
+  value       = var.integrate_prometheus ? (length(juju_integration.prometheus) > 0 ? "active" : "pending") : "disabled"
 }
 
 output "prometheus-integration-id" {
   description = "Prometheus integration ID (if enabled)"
-  value       = var.integrate-prometheus && length(juju_integration.prometheus) > 0 ? juju_integration.prometheus[0].id : null
+  value       = var.integrate_prometheus && length(juju_integration.prometheus) > 0 ? juju_integration.prometheus[0].id : null
 }
 
 output "loki-integration-status" {
   description = "Loki integration status"
-  value       = var.integrate-loki ? (length(juju_integration.loki) > 0 ? "active" : "pending") : "disabled"
+  value       = var.integrate_loki ? (length(juju_integration.loki) > 0 ? "active" : "pending") : "disabled"
 }
 
 output "loki-integration-id" {
   description = "Loki integration ID (if enabled)"
-  value       = var.integrate-loki && length(juju_integration.loki) > 0 ? juju_integration.loki[0].id : null
+  value       = var.integrate_loki && length(juju_integration.loki) > 0 ? juju_integration.loki[0].id : null
 }

@@ -85,6 +85,7 @@ usage() {
     echo ""
     echo -e "${YELLOW}Prerequisites:${NC}"
     echo "  - Run ./scripts/bootstrap.sh to check/install required tools"
+    echo "  - Ensure artifacts are downloaded via ./scripts/download-artifacts.sh <output_dir>"
     echo "  - Configure ./environments/<name>/environment-config.hcl"
     echo "  - Ensure Juju controllers are bootstrapped and accessible"
     echo ""

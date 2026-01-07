@@ -11,34 +11,34 @@
 
 locals {
   # Ensure exactly one deployment path is active
-  charmhub_count = var.charm-source == "charmhub" ? 1 : 0
-  local_count    = var.charm-source == "local" ? 1 : 0
+  charmhub_count = var.charm_source == "charmhub" ? 1 : 0
+  local_count    = var.charm_source == "local" ? 1 : 0
 
   # Validate mutual exclusivity
-  _ = local.charmhub_count + local.local_count == 1 ? null : tobool("FATAL: charm-source must be either 'charmhub' or 'local', not both")
+  _ = local.charmhub_count + local.local_count == 1 ? null : tobool("FATAL: charm_source must be either 'charmhub' or 'local', not both")
 }
 
 # Juju model resource
 resource "juju_model" "principal" {
-  name = var.model-name
+  name = var.model_name
 
   cloud {
-    name   = var.cloud-name
-    region = var.cloud-region
+    name   = var.cloud_name
+    region = var.cloud_region
   }
 }
 
 # Charm Deployment (CharmHub Path)
 resource "juju_application" "principal" {
-  count = var.charm-source == "charmhub" ? 1 : 0
+  count = var.charm_source == "charmhub" ? 1 : 0
 
-  name       = var.app-name
+  name       = var.app_name
   model_uuid = juju_model.principal.uuid
   units      = var.units
 
   charm {
-    name    = var.charm-name
-    channel = var.charm-channel
+    name    = var.charm_name
+    channel = var.charm_channel
     base    = var.base
   }
 
@@ -49,11 +49,11 @@ resource "juju_application" "principal" {
 # Charm Deployment (Local .charm Path)
 # Deploy via CLI - provider cannot manage local charms, so we just deploy and reference by name
 resource "terraform_data" "local_charm_deploy_and_import" {
-  count = var.charm-source == "local" ? 1 : 0
+  count = var.charm_source == "local" ? 1 : 0
 
   # Deploy charm via Juju CLI after model is created
   provisioner "local-exec" {
-    command     = "${var.repo-root}/scripts/deploy-local-charm.sh '${juju_model.principal.name}' '${var.charm-path}' '${var.app-name}' '${var.units}' '${var.base}'"
+    command     = "${path.module}/scripts/deploy-local-charm.sh '${juju_model.principal.name}' '${var.charm_path}' '${var.app_name}' '${var.units}' '${var.base}'"
     working_dir = path.root
   }
 
@@ -63,14 +63,14 @@ resource "terraform_data" "local_charm_deploy_and_import" {
 
 # grafana-agent Deployment (only when COS integration is enabled)
 resource "juju_application" "grafana_agent" {
-  count = var.enable-cos-integration ? 1 : 0
+  count = var.enable_cos_integration ? 1 : 0
 
   name       = "grafana-agent"
   model_uuid = juju_model.principal.uuid
 
   charm {
     name    = "grafana-agent"
-    channel = var.grafana-agent-channel
+    channel = var.grafana_agent_channel
     base    = var.base
   }
 
@@ -83,13 +83,13 @@ resource "juju_application" "grafana_agent" {
 
 # cos-agent relation: principal charm <-> grafana-agent
 resource "juju_integration" "cos_agent" {
-  count = var.enable-cos-integration ? 1 : 0
+  count = var.enable_cos_integration ? 1 : 0
 
   model_uuid = juju_model.principal.uuid
 
   # Provider: principal charm (provides cos-agent relation)
   application {
-    name     = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
+    name     = var.charm_source == "charmhub" ? juju_application.principal[0].name : var.app_name
     endpoint = "cos-agent"
   }
 
@@ -117,10 +117,10 @@ resource "juju_integration" "cos_agent" {
 
 ## CMR: grafana-agent -> Prometheus
 resource "terraform_data" "cos_prometheus" {
-  count = var.enable-cos-integration && var.prometheus-offer-url != "" ? 1 : 0
+  count = var.enable_cos_integration && var.prometheus_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:send-remote-write' '${var.prometheus-offer-url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:send-remote-write' '${var.prometheus_offer_url}'"
   }
 
   depends_on = [
@@ -131,10 +131,10 @@ resource "terraform_data" "cos_prometheus" {
 
 ## CMR: grafana-agent -> Loki
 resource "terraform_data" "cos_loki" {
-  count = var.enable-cos-integration && var.loki-offer-url != "" ? 1 : 0
+  count = var.enable_cos_integration && var.loki_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:logging-consumer' '${var.loki-offer-url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:logging-consumer' '${var.loki_offer_url}'"
   }
 
   depends_on = [
@@ -145,10 +145,10 @@ resource "terraform_data" "cos_loki" {
 
 ## CMR: grafana-agent -> Grafana
 resource "terraform_data" "cos_grafana" {
-  count = var.enable-cos-integration && var.grafana-offer-url != "" ? 1 : 0
+  count = var.enable_cos_integration && var.grafana_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:grafana-dashboards-provider' '${var.grafana-offer-url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:grafana-dashboards-provider' '${var.grafana_offer_url}'"
   }
 
   depends_on = [

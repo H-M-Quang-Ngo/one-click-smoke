@@ -46,7 +46,7 @@ locals {
   landscape_api_key_value    = "CHANGEME-API-KEY"
   landscape_api_secret_value = "CHANGEME-API-SECRET"
 
-  # IMPORTANT: Use environment variables instead:
+  # IMPORTANT: Use environment variables instead (will be prioritized over file values):
   #   export TF_VAR_landscape_api_key_value="actual-key"
   #   export TF_VAR_landscape_api_secret_value="actual-secret"
 

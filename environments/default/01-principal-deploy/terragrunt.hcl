@@ -9,7 +9,7 @@ terraform {
 
   # Switch to provided controller before Terraform operations
   before_hook "switch_to_controller" {
-    commands = ["apply", "destroy"]
+    commands = ["apply", "destroy", "plan"]
     execute  = ["juju", "switch", local.controller_name]
   }
 
@@ -62,28 +62,25 @@ locals {
 }
 
 inputs = {
-  # Repository root for script resolution (absolute path)
-  repo-root = local.repo_root_absolute
-
   # Model configuration
-  model-name   = local.model_name
-  cloud-name   = local.cloud_name
-  cloud-region = local.cloud_region
+  model_name = local.model_name
+  cloud_name = local.cloud_name
+  cloud_region = local.cloud_region
 
   # Principal charm deployment
-  charm-source  = local.charm_source
-  charm-path    = local.charm_path   # Only used if charm-source = "local"
-  charm-name    = local.charm_name
-  charm-channel = local.charm_channel
-  app-name      = local.app_name
+  charm_source = local.charm_source
+  charm_path = local.charm_path   # Only used if charm_source = "local"
+  charm_name = local.charm_name
+  charm_channel = local.charm_channel
+  app_name = local.app_name
   units         = local.units
   base          = local.base
   constraints   = local.constraints
 
   # COS cross-model relations
-  enable-cos-integration = local.enable_cos_integration
-  grafana-agent-channel  = local.grafana_agent_channel
-  prometheus-offer-url   = local.prometheus_offer_url
-  loki-offer-url         = local.loki_offer_url
-  grafana-offer-url      = local.grafana_offer_url
+  enable_cos_integration = local.enable_cos_integration
+  grafana_agent_channel  = local.grafana_agent_channel
+  prometheus_offer_url = local.prometheus_offer_url
+  loki_offer_url = local.loki_offer_url
+  grafana_offer_url = local.grafana_offer_url
 }

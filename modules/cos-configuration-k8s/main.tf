@@ -10,7 +10,7 @@
 # Local Variables - Parse COS Model Path
 locals {
   # Parse cos-model format: "controller:owner/model"
-  cos_model_parts = split(":", var.cos-model)
+  cos_model_parts = split(":", var.cos_model)
   controller      = local.cos_model_parts[0] # cos-controller
   model_full_path = local.cos_model_parts[1] # admin/cos
 
@@ -27,20 +27,20 @@ data "juju_model" "cos" {
 }
 
 resource "juju_application" "cos_config" {
-  name       = var.app-name
+  name       = var.app_name
   model_uuid = data.juju_model.cos.uuid
 
   charm {
     name    = "cos-configuration-k8s"
-    channel = var.charm-channel
+    channel = var.charm_channel
   }
 
   # Git repository configuration for alert rules
   config = {
-    git_repo                    = var.git-repo
-    git_branch                  = var.git-branch
-    prometheus_alert_rules_path = var.prometheus-alert-rules-path
-    loki_alert_rules_path       = var.loki-alert-rules-path
+    git_repo                    = var.git_repo
+    git_branch                  = var.git_branch
+    prometheus_alert_rules_path = var.prometheus_alert_rules_path
+    loki_alert_rules_path       = var.loki_alert_rules_path
   }
 
   units = 1
@@ -48,7 +48,7 @@ resource "juju_application" "cos_config" {
 
 # Integration with Prometheus
 resource "juju_integration" "prometheus" {
-  count = var.integrate-prometheus ? 1 : 0
+  count = var.integrate_prometheus ? 1 : 0
 
   model_uuid = data.juju_model.cos.uuid
 
@@ -65,7 +65,7 @@ resource "juju_integration" "prometheus" {
 
 # Integration with Loki
 resource "juju_integration" "loki" {
-  count = var.integrate-loki ? 1 : 0
+  count = var.integrate_loki ? 1 : 0
 
   model_uuid = data.juju_model.cos.uuid
 

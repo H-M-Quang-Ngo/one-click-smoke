@@ -1,60 +1,60 @@
 # Terraform Outputs for Principal Charm with COS Integration Module
 
 # Model Outputs
-output "model-uuid" {
+output "model_uuid" {
   value       = juju_model.principal.uuid
   description = "Juju model UUID (required for all integrations in v1.0.0)"
 }
 
-output "model-name" {
+output "model_name" {
   value       = juju_model.principal.name
   description = "Juju model name"
 }
 
-output "model-id" {
+output "model_id" {
   value       = juju_model.principal.id
   description = "Juju model resource identifier"
 }
 
 # Application Outputs
-output "app-name" {
-  value       = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
+output "app_name" {
+  value       = var.charm_source == "charmhub" ? juju_application.principal[0].name : var.app_name
   description = "Application name"
 }
 
-output "app-id" {
+output "app_id" {
   # For local charms, construct ID from model UUID and app name
-  value       = var.charm-source == "charmhub" ? juju_application.principal[0].id : "${juju_model.principal.uuid}:${var.app-name}"
+  value       = var.charm_source == "charmhub" ? juju_application.principal[0].id : "${juju_model.principal.uuid}:${var.app_name}"
   description = "Application resource ID"
 }
 
-output "charm-name" {
-  value       = var.charm-name
+output "charm_name" {
+  value       = var.charm_name
   description = "Charm name (CharmHub identifier or local charm name)"
 }
 
-output "charm-source" {
-  value       = var.charm-source
+output "charm_source" {
+  value       = var.charm_source
   description = "Deployment source: 'charmhub' or 'local'"
 }
 
 # Application Endpoint Reference for juju_integration Resources
-output "app-endpoint-reference" {
+output "app_endpoint_reference" {
   value = {
     model_uuid = juju_model.principal.uuid
-    app_name   = var.charm-source == "charmhub" ? juju_application.principal[0].name : var.app-name
+    app_name   = var.charm_source == "charmhub" ? juju_application.principal[0].name : var.app_name
   }
   description = "Reference for juju_integration resources (model_uuid + app_name)"
 }
 
 # grafana-agent Outputs
-output "grafana-agent-deployed" {
-  value       = var.enable-cos-integration
+output "grafana_agent_deployed" {
+  value       = var.enable_cos_integration
   description = "Whether grafana-agent was deployed for COS integration"
 }
 
 # Subordinate Charm Integration Outputs
-output "cos-integration-id" {
+output "cos_integration_id" {
   value = try(
     juju_integration.cos_agent[0].id,
     null
@@ -62,7 +62,7 @@ output "cos-integration-id" {
   description = "COS agent relation resource ID (null if not deployed)"
 }
 
-output "cos-integration-status" {
+output "cos_integration_status" {
   value = try(
     juju_integration.cos_agent[0].id != null ? "active" : "not-deployed",
     "not-deployed"
@@ -76,12 +76,12 @@ output "cos-integration-status" {
 # NOTE: These integrations are created via CLI (`juju integrate`) for cross-controller support.
 # The terraform_data resources don't have Juju integration IDs - status is based on resource existence.
 
-output "cos-cross-model-enabled" {
-  value       = var.enable-cos-integration
+output "cos_cross_model_enabled" {
+  value       = var.enable_cos_integration
   description = "Whether COS cross-model integration is enabled"
 }
 
-output "cos-prometheus-integration-status" {
+output "cos_prometheus_integration_status" {
   value = try(
     terraform_data.cos_prometheus[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
@@ -89,7 +89,7 @@ output "cos-prometheus-integration-status" {
   description = "Prometheus cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
-output "cos-loki-integration-status" {
+output "cos_loki_integration_status" {
   value = try(
     terraform_data.cos_loki[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
@@ -97,7 +97,7 @@ output "cos-loki-integration-status" {
   description = "Loki cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
-output "cos-grafana-integration-status" {
+output "cos_grafana_integration_status" {
   value = try(
     terraform_data.cos_grafana[0].id != null ? "created-via-cli" : "not-deployed",
     "not-deployed"
@@ -105,11 +105,11 @@ output "cos-grafana-integration-status" {
   description = "Grafana cross-model relation status (created-via-cli = CLI integration ran)"
 }
 
-output "cos-offer-urls" {
+output "cos_offer_urls" {
   value = {
-    prometheus = var.prometheus-offer-url
-    loki       = var.loki-offer-url
-    grafana    = var.grafana-offer-url
+    prometheus = var.prometheus_offer_url
+    loki       = var.loki_offer_url
+    grafana    = var.grafana_offer_url
   }
   description = "COS offer URLs used for cross-model relations"
 }
