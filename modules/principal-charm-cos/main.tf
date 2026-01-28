@@ -1,6 +1,6 @@
 # Principal Charm with COS Integration - Terraform Module
 #
-# Deploys machine charms with grafana-agent subordinate for COS observability
+# Deploys machine charms with opentelemetry-collector subordinate for COS observability
 #
 # Supports two deployment paths:
 # 1. CharmHub: Native Terraform juju_application resource
@@ -61,27 +61,27 @@ resource "terraform_data" "local_charm_deploy_and_import" {
   depends_on = [juju_model.principal]
 }
 
-# grafana-agent Deployment (only when COS integration is enabled)
-resource "juju_application" "grafana_agent" {
+# opentelemetry-collector Deployment (only when COS integration is enabled)
+resource "juju_application" "opentelemetry_collector" {
   count = var.enable_cos_integration ? 1 : 0
 
-  name       = "grafana-agent"
+  name       = "opentelemetry-collector"
   model_uuid = juju_model.principal.uuid
 
   charm {
-    name    = "grafana-agent"
-    channel = var.grafana_agent_channel
+    name    = "opentelemetry-collector"
+    channel = var.opentelemetry_collector_channel
     base    = var.base
   }
 
-  # Ensure principal app exists before deploying grafana-agent
+  # Ensure principal app exists before deploying opentelemetry-collector
   depends_on = [
     juju_application.principal,
     terraform_data.local_charm_deploy_and_import
   ]
 }
 
-# cos-agent relation: principal charm <-> grafana-agent
+# cos-agent relation: principal charm <-> opentelemetry-collector
 resource "juju_integration" "cos_agent" {
   count = var.enable_cos_integration ? 1 : 0
 
@@ -93,9 +93,9 @@ resource "juju_integration" "cos_agent" {
     endpoint = "cos-agent"
   }
 
-  # Requirer: grafana-agent subordinate (requires cos-agent relation)
+  # Requirer: opentelemetry-collector subordinate (requires cos-agent relation)
   application {
-    name     = "grafana-agent"
+    name     = "opentelemetry-collector"
     endpoint = "cos-agent"
   }
 
@@ -103,7 +103,7 @@ resource "juju_integration" "cos_agent" {
   depends_on = [
     juju_application.principal,
     terraform_data.local_charm_deploy_and_import,
-    juju_application.grafana_agent
+    juju_application.opentelemetry_collector
   ]
 }
 
@@ -115,44 +115,44 @@ resource "juju_integration" "cos_agent" {
 # Therefore, for cross-controller CMR, a workaround is to use CLI:
 # `juju integrate -m <model> <app>:<endpoint> <offer-url>`
 
-## CMR: grafana-agent -> Prometheus
+## CMR: opentelemetry-collector -> Prometheus
 resource "terraform_data" "cos_prometheus" {
   count = var.enable_cos_integration && var.prometheus_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:send-remote-write' '${var.prometheus_offer_url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'opentelemetry-collector:send-remote-write' '${var.prometheus_offer_url}'"
   }
 
   depends_on = [
-    juju_application.grafana_agent,
+    juju_application.opentelemetry_collector,
     juju_integration.cos_agent
   ]
 }
 
-## CMR: grafana-agent -> Loki
+## CMR: opentelemetry-collector -> Loki
 resource "terraform_data" "cos_loki" {
   count = var.enable_cos_integration && var.loki_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:logging-consumer' '${var.loki_offer_url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'opentelemetry-collector:send-loki-logs' '${var.loki_offer_url}'"
   }
 
   depends_on = [
-    juju_application.grafana_agent,
+    juju_application.opentelemetry_collector,
     juju_integration.cos_agent
   ]
 }
 
-## CMR: grafana-agent -> Grafana
+## CMR: opentelemetry-collector -> Grafana
 resource "terraform_data" "cos_grafana" {
   count = var.enable_cos_integration && var.grafana_offer_url != "" ? 1 : 0
 
   provisioner "local-exec" {
-    command = "juju integrate -m '${juju_model.principal.name}' 'grafana-agent:grafana-dashboards-provider' '${var.grafana_offer_url}'"
+    command = "juju integrate -m '${juju_model.principal.name}' 'opentelemetry-collector:grafana-dashboards-provider' '${var.grafana_offer_url}'"
   }
 
   depends_on = [
-    juju_application.grafana_agent,
+    juju_application.opentelemetry_collector,
     juju_integration.cos_agent
   ]
 }

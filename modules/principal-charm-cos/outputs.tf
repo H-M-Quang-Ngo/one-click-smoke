@@ -47,10 +47,10 @@ output "app_endpoint_reference" {
   description = "Reference for juju_integration resources (model_uuid + app_name)"
 }
 
-# grafana-agent Outputs
-output "grafana_agent_deployed" {
+# opentelemetry-collector Outputs
+output "opentelemetry_collector_deployed" {
   value       = var.enable_cos_integration
-  description = "Whether grafana-agent was deployed for COS integration"
+  description = "Whether opentelemetry-collector was deployed for COS integration"
 }
 
 # Subordinate Charm Integration Outputs

@@ -57,9 +57,9 @@ locals {
   # ============================================================================
   # COS Integration
   # ============================================================================
-  # When enabled: deploys grafana-agent and creates cross-model relations to COS
-  enable_cos_integration = true
-  grafana_agent_channel  = "latest/stable"
+  # When enabled: deploys opentelemetry-collector and creates cross-model relations to COS
+  enable_cos_integration        = true
+  opentelemetry_collector_channel = "2/stable"
 
   # COS offer URLs (format: controller:owner/model.app:endpoint)
   prometheus_offer_url = "cos-controller:admin/cos.prometheus-receive-remote-write"

@@ -1,7 +1,7 @@
-# Terraform Variables for Principal Charm with COS Integration via Grafana-Agent
+# Terraform Variables for Principal Charm with COS Integration via OpenTelemetry Collector
 #
 # This module supports deploying machine charms from CharmHub or local .charm files
-# with grafana-agent subordinate integration for COS integration.
+# with opentelemetry-collector subordinate integration for COS integration.
 
 # Model Variables
 variable "model_name" {
@@ -94,17 +94,17 @@ variable "constraints" {
 }
 
 # COS Integration Variables
-# grafana-agent is only deployed when COS integration is enabled.
+# opentelemetry-collector is only deployed when COS integration is enabled.
 variable "enable_cos_integration" {
-  description = "Enable COS integration: deploys grafana-agent and creates cross-model relations to COS"
+  description = "Enable COS integration: deploys opentelemetry-collector and creates cross-model relations to COS"
   type        = bool
   default     = true
 }
 
-variable "grafana_agent_channel" {
-  description = "CharmHub channel for grafana-agent (e.g., latest/stable, latest/edge)"
+variable "opentelemetry_collector_channel" {
+  description = "CharmHub channel for opentelemetry-collector (e.g., 2/stable, latest/edge)"
   type        = string
-  default     = "1/stable"
+  default     = "2/stable"
 }
 
 variable "prometheus_offer_url" {

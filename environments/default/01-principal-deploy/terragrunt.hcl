@@ -1,7 +1,7 @@
-# Stage 1 - CVE Scanner and Grafana-Agent Deployment
+# Stage 1 - CVE Scanner and OpenTelemetry Collector Deployment
 #
 # - Deploy cve-scanner charm
-# - If COS integration enabled: deploy grafana-agent and create COS relations
+# - If COS integration enabled: deploy opentelemetry-collector and create COS relations
 #
 
 terraform {
@@ -19,10 +19,10 @@ terraform {
     execute  = ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, local.app_name, "status==\"active\" || status==\"blocked\""]
   }
 
-  # Wait for grafana-agent to be active (only if COS integration enabled)
-  after_hook "wait_for_grafana_agent" {
+  # Wait for opentelemetry-collector to be active (only if COS integration enabled)
+  after_hook "wait_for_opentelemetry_collector" {
     commands = ["apply"]
-    execute  = local.enable_cos_integration ? ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, "grafana-agent", "status==\"active\""] : ["echo", "COS integration disabled, skipping grafana-agent wait"]
+    execute  = local.enable_cos_integration ? ["${get_repo_root()}/scripts/wait-for-application.sh", local.model_name, "opentelemetry-collector", "status==\"active\""] : ["echo", "COS integration disabled, skipping opentelemetry-collector wait"]
   }
 }
 
@@ -54,11 +54,11 @@ locals {
   constraints   = try(local.env_vars.locals.constraints, "")
 
   # COS cross-model integration
-  enable_cos_integration  = try(local.env_vars.locals.enable_cos_integration, true)
-  grafana_agent_channel   = try(local.env_vars.locals.grafana_agent_channel, "latest/stable")
-  prometheus_offer_url    = local.env_vars.locals.prometheus_offer_url
-  loki_offer_url          = local.env_vars.locals.loki_offer_url
-  grafana_offer_url       = local.env_vars.locals.grafana_offer_url
+  enable_cos_integration        = try(local.env_vars.locals.enable_cos_integration, true)
+  opentelemetry_collector_channel = try(local.env_vars.locals.opentelemetry_collector_channel, "2/stable")
+  prometheus_offer_url          = local.env_vars.locals.prometheus_offer_url
+  loki_offer_url                = local.env_vars.locals.loki_offer_url
+  grafana_offer_url             = local.env_vars.locals.grafana_offer_url
 }
 
 inputs = {
@@ -78,9 +78,9 @@ inputs = {
   constraints   = local.constraints
 
   # COS cross-model relations
-  enable_cos_integration = local.enable_cos_integration
-  grafana_agent_channel  = local.grafana_agent_channel
-  prometheus_offer_url = local.prometheus_offer_url
-  loki_offer_url = local.loki_offer_url
-  grafana_offer_url = local.grafana_offer_url
+  enable_cos_integration        = local.enable_cos_integration
+  opentelemetry_collector_channel = local.opentelemetry_collector_channel
+  prometheus_offer_url          = local.prometheus_offer_url
+  loki_offer_url                = local.loki_offer_url
+  grafana_offer_url             = local.grafana_offer_url
 }

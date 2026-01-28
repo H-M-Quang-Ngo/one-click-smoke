@@ -212,7 +212,7 @@ check_requirements() {
 # Deploy CVE Scanner
 deploy_cve_scanner() {
     log_step "Deploying CVE Scanner component..."
-    log_info "CVE-Scanner Stage 1: Charm deployment (cve-scanner + grafana-agent + COS integration)"
+    log_info "CVE-Scanner Stage 1: Charm deployment (cve-scanner + opentelemetry-collector + COS integration)"
 
     if ! terragrunt --non-interactive --working-dir "$ENV_DIR/01-principal-deploy" "$ACTION" $AUTO_APPROVE; then
         log_error "CVE-Scanner Stage 1 failed: Charm deployment"
@@ -238,7 +238,7 @@ destroy_cve_scanner() {
         return 1
     fi
 
-    log_info "CVE-Scanner Stage 1: Removing principal charm (cve-scanner + grafana-agent)"
+    log_info "CVE-Scanner Stage 1: Removing principal charm (cve-scanner + opentelemetry-collector)"
     if ! terragrunt --non-interactive --working-dir "$ENV_DIR/01-principal-deploy" destroy $AUTO_APPROVE; then
         log_error "CVE-Scanner Stage 1 failed: Principal deployment destroy"
         return 1

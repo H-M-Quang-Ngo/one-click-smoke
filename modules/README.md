@@ -8,7 +8,7 @@ These modules can be consumed directly in Terraform.
 |--------|---------|
 | `cve-scanner` | Complete `cve-scanner` deployment (`principal-charm-cos` + `cve-scanner-config`) |
 | `cos-configuration-k8s` | `cos-configuration-k8s` alert rules deployment |
-| `principal-charm-cos` | Generic machine charm deployment with COS integration via `grafana-agent` |
+| `principal-charm-cos` | Generic machine charm deployment with COS integration via `opentelemetry-collector` |
 | `cve-scanner-config` | `cve-scanner` configuration |
 
 ## Usage

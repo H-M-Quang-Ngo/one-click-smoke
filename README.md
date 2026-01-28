@@ -28,12 +28,12 @@ Both components integrate with [COS Lite](https://documentation.ubuntu.com/obser
 ## What will be Deployed?
 - **cve-scanner**:
   - A new Juju model will be created with `cve-scanner` principal machine charm deployed
-  - `grafana-agent` installed, connected to `cve-scanner` and integrated with existing COS Lite via provided offered URLs
+  - `opentelemetry-collector` installed, connected to `cve-scanner` and integrated with existing COS Lite via provided offered URLs
   - `cve-scanner` configured with provided Landscape credentials for retrieving package data from managed nodes
 
   Example output:
-    ![alt text](./images/image-2.png)
-  _`cve-scanner` deployed into a new Juju model `cve-1-click` managed by existing Juju controller `lsc-controlller`, integrated with existing COS Lite via `grafana-agent`._
+    ![alt text](./images/image-1.png)
+  _`cve-scanner` deployed into a new Juju model `cve-1-click` managed by existing Juju controller `lsc-controlller`, integrated with existing COS Lite via `opentelemetry-collector`._
 
 - **cos-configuration-k8s**:
   - `cos-configuration-k8s` charm deployed into the existing Juju model that hosting COS Lite
@@ -43,7 +43,7 @@ Both components integrate with [COS Lite](https://documentation.ubuntu.com/obser
   > **Important Note:** The alert rules might not work out-of-the-box and require extra configuration from the targets' side (OpenStack, K8s, etc.) for proper alerting. Please refer to Smoke Alerts repository and its [setup guides](https://github.com/canonical/smoke-alerts/tree/main/docs/setup_guides).
 
   Example output:
-    ![alt text](./images/image-1.png)
+    ![alt text](./images/image-2.png)
   _`cos-configuration-k8s` deployed as `cos-config` into existing Juju model `cos-model` hosting COS Lite, syncing alert rules from Smoke-Alerts repository._
 
 ## Directory Structure
@@ -53,13 +53,13 @@ one-click-smoke/
 ├── modules/              # Reusable Terraform modules (see modules/README.md for standalone usage)
 │   ├── cve-scanner/                        # CVE Scanner wrapper (principal + config)
 │   ├── cos-configuration-k8s/              # COS configuration charm
-│   ├── principal-charm-cos/                # Machine charm + grafana-agent + COS integration
+│   ├── principal-charm-cos/                # Machine charm + opentelemetry-collector + COS integration
 │   └── cve-scanner-config/                 # CVE Scanner configuration
 ├── environments/         # Environment-specific setup
 │   └── default/
 │       ├── environment-config.hcl          # Environment configurations (not committed, taken from template)
 │       ├── environment-config.template.hcl # Template for environment configuration
-│       ├── 01-principal-deploy/            # Deploy machine charm and connect to COS (via grafana-agent)
+│       ├── 01-principal-deploy/            # Deploy machine charm and connect to COS (via opentelemetry-collector)
 │       │   └── terragrunt.hcl
 │       └── 02-cve-scanner-specific/        # Configure CVE Scanner charm
 │       │   └── terragrunt.hcl
@@ -127,7 +127,7 @@ From the environment directory (for example, `./environments/default/`), either 
 cd ./environments/default
 
 # CVE Scanner Deployment - 2 stages
-## Stage 1: Deploy cve-scanner charm + grafana-agent + COS integration
+## Stage 1: Deploy cve-scanner charm + opentelemetry-collector + COS integration
 terragrunt --working-dir 01-principal-deploy apply --auto-approve
 
 ## Stage 2: Configure cve-scanner (Landscape credentials, snap resource)

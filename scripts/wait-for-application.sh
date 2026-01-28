@@ -25,7 +25,7 @@ if [[ -z "$APPLICATION" ]]; then
   echo "  TIMEOUT      - Maximum wait time (default: 10m0s)" >&2
   echo "" >&2
   echo "Examples:" >&2
-  echo "  $0 my-model grafana-agent 'status==\"active\"'" >&2
+  echo "  $0 my-model opentelemetry-collector 'status==\"active\"'" >&2
   echo "  $0 my-model cve-scanner 'status==\"active\" || status==\"blocked\"'" >&2
   exit 1
 fi
